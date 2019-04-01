@@ -5,9 +5,12 @@ import numpy as np
 import pandas as pd
 import re
 import nltk
+import random
 
 #Fetches the xml file and stores it in variable called tree
-tree = ET.parse(r'D:\bin\AIT-690\Assignments\wsd\PA3\PA3\line-train.xml')
+#tree = ET.parse(r'D:\bin\AIT-690\Assignments\wsd\PA3\PA3\line-train.xml')
+
+tree = ET.parse(r'C:\Users\alaga\Desktop\sem 2\AIT690\WSD\line-train.xml')
 #Points to the root of the tree
 root = tree.getroot()
 line=root.find('lexelt')
@@ -16,7 +19,7 @@ line=root.find('lexelt')
 def bigram(xmlstr):
     features=re.findall('(\w+ \w+)"?.?-? <head>\w{4,5}<\/head> (\w+ \w+)', str(xmlstr), re.IGNORECASE)
     if(features==[]):
-        return('EOL')
+        return('E O L')
     else:
         return(features)
 
@@ -58,14 +61,14 @@ def kwordsAfter(xmlstr,k):
         if(len(bag_of_words)>index+i):
             features.append(bag_of_words[index+i])
         else:
-            features.append('EOL')
+            features.append('E O L')
     return(features)
 
 #Returns a word before and after the ambigus word
 def unigram(xmlstr):
     features=re.findall('(\w+)"?.?-? <head>\w{4,5}<\/head> (\w+)', str(xmlstr), re.IGNORECASE)
     if(features==[]):
-        return(['EOL'])
+        return('E O L')
     else:
         return(features)
     return(features)
@@ -73,7 +76,7 @@ def unigram(xmlstr):
 def kminus1(xmlstr):
     features=re.findall('"?(\w+)"?.?-? <head>', str(xmlstr), re.IGNORECASE)
     if(features==[]):
-        return(['EOL'])
+        return('E O L')
     else:
         return(features)
     return(features)
@@ -81,7 +84,7 @@ def kminus1(xmlstr):
 def kplus1(xmlstr):
     features=re.findall(r'</head> [,.;"]? ?(\w+)', str(xmlstr), re.IGNORECASE)
     if(features==[]):
-        return(['EOL'])
+        return('E O L')
     else:
         return(features)
 
@@ -176,3 +179,149 @@ unigramwords=dfBuilder(unigramFeature)
 bigramwords=dfBuilder(bigramFeature) 
 kminus2words=dfBuilder(kminus2Feature)
 kplus2words=dfBuilder(kplus2Feature)
+
+
+
+
+
+content=[]
+cnt=1
+for val in line:
+    for context in val:
+        if(cnt%2==0):
+            temp=str(ET.tostring(context))
+            temp = temp.replace("<s>","")
+            temp = temp.replace("</s>", "")
+            temp = temp.replace(r'\n', "")
+            temp = temp.replace("<context>", "")
+            temp = temp.replace("</context>", "")
+            print(temp)
+            content.append(temp)
+        cnt+=1
+
+
+
+
+
+
+def prob_finder(temp_list,flag):
+    if (temp_list != 'E O L'):
+
+
+        if(flag==0):
+            mer = temp_list[0][0] + " " + temp_list[0][1]
+            product = bigramwords.at[mer, 'product']
+            phone = bigramwords.at[mer, 'phone']
+
+        elif(flag==1):
+            mer = temp_list[0][0] + " " + temp_list[0][1]
+            product = unigramwords.at[mer, 'product']
+            phone = unigramwords.at[mer, 'phone']
+
+        elif (flag == 2):
+            mer = temp_list[0] + " " + temp_list[1]
+            product = kplus2words.at[mer, 'product']
+            phone = kplus2words.at[mer, 'phone']
+
+        elif (flag == 3):
+            mer = temp_list[0] + " " + temp_list[1]
+            product = kminus2words.at[mer, 'product']
+            phone = kminus2words.at[mer, 'phone']
+
+        elif (flag == 4):
+            print(temp_list[0])
+            product = oneWordAfter.at[temp_list[0], 'product']
+            phone = oneWordAfter.at[temp_list[0], 'phone']
+
+        elif (flag == 5):
+
+            product = oneWordBefore.at[temp_list[0], 'product']
+            phone = oneWordBefore.at[temp_list[0], 'phone']
+
+
+        if (product == phone):
+            prob = max(product, phone)
+            wsd=random.choice(["product","phone"])
+
+        else:
+            prob = np.log(product / phone)
+            if(product>phone):
+                wsd="product";
+            else:
+                wsd="phone"
+
+
+    else:
+        prob = 0
+        wsd = random.choice(["product", "phone"])
+
+
+    return abs(prob),wsd
+
+
+bi_prob=[]
+uni_prob=[]
+minus2_prob=[]
+plus2_prob=[]
+minus1_prob=[]
+plus1_prob=[]
+final=[]
+x=-1
+for i in content:
+    x+=1
+
+    a = bigram(i)
+    flag=0
+    prob,aa=prob_finder(a,flag)
+    bi_prob.append(prob)
+
+    b = unigram(i)
+    flag=1
+    prob,bb = prob_finder(b,flag)
+    uni_prob.append(prob)
+
+    c = kwordsAfter(i, 2)
+    flag = 2
+    prob,cc = prob_finder(c, flag)
+    plus2_prob.append(prob)
+
+    d =kwordsBefore(i,2)
+    flag = 3
+    prob,dd = prob_finder(d, flag)
+    minus2_prob.append(prob)
+
+    '''   
+    e = kplus1(i)
+    flag = 4
+    print(a)
+    prob,ee = prob_finder(e, flag)
+    plus1_prob.append(prob)
+    '''
+
+    f = kminus1(i)
+    flag = 5
+    prob,ff = prob_finder(f, flag)
+    minus1_prob.append(prob)
+
+    collection=[bi_prob[x],uni_prob[x],plus2_prob[x],minus2_prob[x],minus1_prob[x]]
+    reorder=np.argmax([bi_prob[x],uni_prob[x],plus2_prob[x],minus2_prob[x],minus1_prob[x]])
+
+    if(reorder==4):
+        final.append(ff)
+
+    elif (reorder == 3):
+        final.append(dd)
+
+    elif (reorder == 2):
+        final.append(cc)
+
+    elif (reorder == 1):
+        final.append(bb)
+
+    elif (reorder == 0):
+        final.append(aa)
+
+
+
+
+
