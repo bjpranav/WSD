@@ -8,9 +8,9 @@ import nltk
 import random
 
 #Fetches the xml file and stores it in variable called tree
-tree = ET.parse(r'D:\bin\AIT-690\Assignments\wsd\PA3\PA3\line-train.xml')
+#tree = ET.parse(r'D:\bin\AIT-690\Assignments\wsd\PA3\PA3\line-train.xml')
 
-#tree = ET.parse(r'C:\Users\alaga\Desktop\sem 2\AIT690\WSD\line-train.xml')
+tree = ET.parse(r'C:\Users\alaga\Desktop\sem 2\AIT690\WSD\line-train.xml')
 #Points to the root of the tree
 root = tree.getroot()
 line=root.find('lexelt')
@@ -221,7 +221,6 @@ for val in line:
             temp = temp.replace(r'\n', "")
             temp = temp.replace("<context>", "")
             temp = temp.replace("</context>", "")
-            #print(temp)
             content.append(temp)
         cnt+=1
 
@@ -258,7 +257,7 @@ def prob_finder(temp_list,flag):
             
             product = oneWordAfter.at[temp_list[0], 'product']
             phone = oneWordAfter.at[temp_list[0], 'phone']
-            #print(product,phone)
+
 
         elif (flag == 5):
 
@@ -266,7 +265,6 @@ def prob_finder(temp_list,flag):
             phone = oneWordBefore.at[temp_list[0], 'phone']
             
         elif (flag == 6):
-            print(temp_list[0],len(temp_list[0]))
             product = beforeTagDf.at[temp_list[0], 'product']
             phone = beforeTagDf.at[temp_list[0], 'phone']
             
@@ -341,36 +339,33 @@ for i in content:
     
     tags=tagger(i)
     g=[tags[0]]
-    #print(g)
     flag=6
     prob,gg = prob_finder(g, flag)
     beforeTag_prob.append(prob)
     
     h=[tags[1]]
     flag=7
-    prob,h = prob_finder(h, flag)
+    prob,hh = prob_finder(h, flag)
     afterTag_prob.append(prob)
 
 
-    collection=[bi_prob[x],uni_prob[x],plus2_prob[x],minus2_prob[x],minus1_prob[x],beforeTag_prob[x],afterTag_prob[x]]
-    reorder=np.argmax([bi_prob[x],uni_prob[x],plus2_prob[x],minus2_prob[x],minus1_prob[x],beforeTag_prob[x],afterTag_prob[x]])
+    collection=[bi_prob[x],uni_prob[x],plus2_prob[x],minus2_prob[x],plus1_prob[x],minus1_prob[x],beforeTag_prob[x],afterTag_prob[x]]
+    reorder=np.argmax([bi_prob[x],uni_prob[x],plus2_prob[x],minus2_prob[x],plus1_prob[x],minus1_prob[x],beforeTag_prob[x],afterTag_prob[x]])
 
-    if(reorder==6):
-        final.append(ff)
+    if(reorder==7):
+        final.append(hh)
+    elif(reorder==6):
+        final.append(gg)
     elif(reorder==5):
         final.append(ff)
     elif(reorder==4):
-        final.append(ff)
-
+        final.append(ee)
     elif (reorder == 3):
         final.append(dd)
-
     elif (reorder == 2):
         final.append(cc)
-
     elif (reorder == 1):
         final.append(bb)
-
     elif (reorder == 0):
         final.append(aa)
 
