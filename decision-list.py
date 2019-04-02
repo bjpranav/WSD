@@ -234,44 +234,74 @@ def prob_finder(temp_list,flag):
 
 
         if(flag==0):
+
             mer = temp_list[0][0] + " " + temp_list[0][1]
-            product = bigramwords.at[mer, 'product']
-            phone = bigramwords.at[mer, 'phone']
+            if(mer in bigramwords.index):
+                product = bigramwords.at[mer, 'product']
+                phone = bigramwords.at[mer, 'phone']
+            else:
+                product=0
+                phone=0
 
         elif(flag==1):
             mer = temp_list[0][0] + " " + temp_list[0][1]
-            product = unigramwords.at[mer, 'product']
-            phone = unigramwords.at[mer, 'phone']
+            if (mer in unigramwords.index):
+                product = unigramwords.at[mer, 'product']
+                phone = unigramwords.at[mer, 'phone']
+            else:
+                product = 0
+                phone = 0
 
         elif (flag == 2):
+
             mer = temp_list[0] + " " + temp_list[1]
-            product = kplus2words.at[mer, 'product']
-            phone = kplus2words.at[mer, 'phone']
+            if (mer in kplus2words):
+                product = kplus2words.at[mer, 'product']
+                phone = kplus2words.at[mer, 'phone']
+            else:
+                product = 0
+                phone = 0
 
         elif (flag == 3):
             mer = temp_list[0] + " " + temp_list[1]
-            product = kminus2words.at[mer, 'product']
-            phone = kminus2words.at[mer, 'phone']
+            if(mer in kminus2words):
+                product = kminus2words.at[mer, 'product']
+                phone = kminus2words.at[mer, 'phone']
+            else:
+                product = 0
+                phone = 0
 
         elif (flag == 4):
-            
-            product = oneWordAfter.at[temp_list[0], 'product']
-            phone = oneWordAfter.at[temp_list[0], 'phone']
-
+            if(temp_list[0] in oneWordAfter):
+                product = oneWordAfter.at[temp_list[0], 'product']
+                phone = oneWordAfter.at[temp_list[0], 'phone']
+            else:
+                product = 0
+                phone = 0
 
         elif (flag == 5):
-
-            product = oneWordBefore.at[temp_list[0], 'product']
-            phone = oneWordBefore.at[temp_list[0], 'phone']
+            if(temp_list[0] in oneWordBefore):
+                product = oneWordBefore.at[temp_list[0], 'product']
+                phone = oneWordBefore.at[temp_list[0], 'phone']
+            else:
+                product = 0
+                phone = 0
             
         elif (flag == 6):
-            product = beforeTagDf.at[temp_list[0], 'product']
-            phone = beforeTagDf.at[temp_list[0], 'phone']
+            if(temp_list[0] in beforeTagDf):
+                product = beforeTagDf.at[temp_list[0], 'product']
+                phone = beforeTagDf.at[temp_list[0], 'phone']
+            else:
+                product = 0
+                phone = 0
             
         elif (flag == 7):
-            product = afterTagDf.at[temp_list[0], 'product']
-            phone = afterTagDf.at[temp_list[0], 'phone']
-
+            if(temp_list[0] in afterTagDf):
+                product = afterTagDf.at[temp_list[0], 'product']
+                phone = afterTagDf.at[temp_list[0], 'phone']
+            else:
+                product = 0
+                phone = 0
 
         if (product == phone):
             prob = max(product, phone)
@@ -371,4 +401,55 @@ for i in content:
 
 
 
+tree = ET.parse(r'C:\Users\alaga\Desktop\sem 2\AIT690\WSD\line-test.xml')
+#Points to the root of the tree
+root = tree.getroot()
+line1=root.find('lexelt')
+
+content=[]
+instanceId=[]
+for val in line1:
+    instanceId.append((val.attrib)['id'])
+    for context in val:
+        temp=str(ET.tostring(context))
+        temp = temp.replace("<s>","")
+        temp = temp.replace("</s>", "")
+        temp = temp.replace(r'\n', "")
+        temp = temp.replace("<context>", "")
+        temp = temp.replace("</context>", "")
+        content.append(temp)
+
+
+
+
+key=open(r"C:\Users\alaga\Desktop\sem 2\AIT690\WSD1\line-answers.txt")
+key=key.read()
+
+
+my_list=""
+for i in range(0,len(instanceId)):
+    temp='<answer instance="'+instanceId[i]+'" senseid="'+final[i]+'"/>'
+    my_list=my_list+temp+'\n'
+
+
+
+key=key.split()
+my_list=my_list.split()
+
+ans_key=[]
+my_ans=[]
+for i in range(0,len(key)):
+    if(key[i].find("senseid")==False):
+        ans_key.append(key[i])
+        my_ans.append(my_list[i])
+
+
+
+acc=0
+for i in range(0,len(ans_key)):
+    if(ans_key[i]==my_ans[i]):
+        acc+=1
+
+
+print(acc/len(ans_key))
 
