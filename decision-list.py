@@ -8,9 +8,9 @@ import nltk
 import random
 
 #Fetches the xml file and stores it in variable called tree
-#tree = ET.parse(r'D:\bin\AIT-690\Assignments\wsd\PA3\PA3\line-train.xml')
+tree = ET.parse(r'D:\bin\AIT-690\Assignments\wsd\PA3\PA3\line-train.xml')
 
-tree = ET.parse(r'C:\Users\alaga\Desktop\sem 2\AIT690\WSD\line-train.xml')
+#tree = ET.parse(r'C:\Users\alaga\Desktop\sem 2\AIT690\WSD\line-train.xml')
 #Points to the root of the tree
 root = tree.getroot()
 line=root.find('lexelt')
@@ -36,8 +36,6 @@ def kwordsBefore(xmlstr,k):
         index=bag_of_words.index('<head>Lines</head>')
     elif('<head>Line</head>' in bag_of_words):
         index=bag_of_words.index('<head>Line</head>')
-    else:
-        print(cleanedWords)
     for i in range(1,k+1):
         features.append(bag_of_words[index-i])
     return(features)
@@ -66,6 +64,12 @@ def kwordsAfter(xmlstr,k):
 
 #Returns a word before and after the ambigus word
 def unigram(xmlstr):
+    xmlstr=str(xmlstr)
+    xmlstr = xmlstr.replace("<s>","")
+    xmlstr = xmlstr.replace("</s>", "")
+    xmlstr = xmlstr.replace(r'\n', "")
+    xmlstr = xmlstr.replace("<context>", "")
+    xmlstr = xmlstr.replace("</context>", "")
     features=re.findall('(\w+)"?.?-? <head>\w{4,5}<\/head> (\w+)', str(xmlstr), re.IGNORECASE)
     if(features==[]):
         return('E O L')
@@ -74,6 +78,12 @@ def unigram(xmlstr):
     return(features)
 #Returns a word before the ambigus word
 def kminus1(xmlstr):
+    xmlstr=str(xmlstr)
+    xmlstr = xmlstr.replace("<s>","")
+    xmlstr = xmlstr.replace("</s>", "")
+    xmlstr = xmlstr.replace(r'\n', "")
+    xmlstr = xmlstr.replace("<context>", "")
+    xmlstr = xmlstr.replace("</context>", "")
     features=re.findall('"?(\w+)"?.?-? <head>', str(xmlstr), re.IGNORECASE)
     if(features==[]):
         return('E O L')
@@ -82,6 +92,12 @@ def kminus1(xmlstr):
     return(features)
 #Returns a word after the ambigus word
 def kplus1(xmlstr):
+    xmlstr=str(xmlstr)
+    xmlstr = xmlstr.replace("<s>","")
+    xmlstr = xmlstr.replace("</s>", "")
+    xmlstr = xmlstr.replace(r'\n', "")
+    xmlstr = xmlstr.replace("<context>", "")
+    xmlstr = xmlstr.replace("</context>", "")
     features=re.findall(r'</head> [,.;"]? ?(\w+)', str(xmlstr), re.IGNORECASE)
     if(features==[]):
         return('E O L')
@@ -93,7 +109,14 @@ def kplus1(xmlstr):
 def tagger(xmlstr):
     #features=re.findall('</head> (\w+)', str(xmlstr), re.IGNORECASE)
     index=None
-    querywords = str(xmlstr).replace('</s>','').replace('<s>','').replace('</context>','').replace('\n','').replace('<context>','').replace('\\n\\n','').replace('\\n','')     
+    xmlstr=str(xmlstr)
+    xmlstr = xmlstr.replace("<s>","")
+    xmlstr = xmlstr.replace("</s>", "")
+    xmlstr = xmlstr.replace(r'\n', "")
+    xmlstr = xmlstr.replace("<context>", "")
+    xmlstr = xmlstr.replace("</context>", "")
+    querywords=xmlstr
+    #querywords = str(xmlstr).replace('</s>','').replace('<s>','').replace('</context>','').replace('\n','').replace('<context>','').replace('\\n\\n','').replace('\\n','')     
     wordsList=querywords.split()
     if('<head>line</head>' in wordsList):
         index=wordsList.index('<head>line</head>')
@@ -118,10 +141,11 @@ afterTag=[]
 senses=[]
 kminus2Feature=[]
 kplus2Feature=[]
+instanceId=[]
 #Iterates through all the instances
 for val in line:
     #Stores the instance ID
-    instanceId=(val.attrib)['id']
+    instanceId.append((val.attrib)['id'])
     #Iterates through all the tags under instance tag
     for context in val:
         #If the tag has sense id the that is stored in the senseId variable
@@ -149,7 +173,7 @@ for val in line:
             #print(beforeTag,afterTag)
             kminus2Feature.append((' '.join(kwordsBefore(xmlstr,2)),senseId))
             kplus2Feature.append((' '.join(kwordsAfter(xmlstr,2)),senseId))
-            print(kwordsBefore(xmlstr,3))
+            #print(kwordsBefore(xmlstr,3))
 
 
 def setz(sequence):
@@ -162,7 +186,7 @@ def setz(sequence):
 
 
 def initialize(sequence1,sequence2):
-    return(np.zeros((len(sequence1), len(sequence2))))
+    return(np.ones((len(sequence1), len(sequence2))))
     
 def dfBuilder(featureSequence):
     uniqueList=setz(featureSequence)
@@ -179,6 +203,8 @@ unigramwords=dfBuilder(unigramFeature)
 bigramwords=dfBuilder(bigramFeature) 
 kminus2words=dfBuilder(kminus2Feature)
 kplus2words=dfBuilder(kplus2Feature)
+beforeTagDf=dfBuilder(beforeTag)
+afterTagDf=dfBuilder(afterTag)
 
 
 
@@ -195,7 +221,7 @@ for val in line:
             temp = temp.replace(r'\n', "")
             temp = temp.replace("<context>", "")
             temp = temp.replace("</context>", "")
-            print(temp)
+            #print(temp)
             content.append(temp)
         cnt+=1
 
@@ -229,14 +255,24 @@ def prob_finder(temp_list,flag):
             phone = kminus2words.at[mer, 'phone']
 
         elif (flag == 4):
-            print(temp_list[0])
+            
             product = oneWordAfter.at[temp_list[0], 'product']
             phone = oneWordAfter.at[temp_list[0], 'phone']
+            #print(product,phone)
 
         elif (flag == 5):
 
             product = oneWordBefore.at[temp_list[0], 'product']
             phone = oneWordBefore.at[temp_list[0], 'phone']
+            
+        elif (flag == 6):
+            print(temp_list[0],len(temp_list[0]))
+            product = beforeTagDf.at[temp_list[0], 'product']
+            phone = beforeTagDf.at[temp_list[0], 'phone']
+            
+        elif (flag == 7):
+            product = afterTagDf.at[temp_list[0], 'product']
+            phone = afterTagDf.at[temp_list[0], 'phone']
 
 
         if (product == phone):
@@ -265,11 +301,12 @@ minus2_prob=[]
 plus2_prob=[]
 minus1_prob=[]
 plus1_prob=[]
+beforeTag_prob=[]
+afterTag_prob=[]
 final=[]
 x=-1
 for i in content:
     x+=1
-
     a = bigram(i)
     flag=0
     prob,aa=prob_finder(a,flag)
@@ -290,23 +327,39 @@ for i in content:
     prob,dd = prob_finder(d, flag)
     minus2_prob.append(prob)
 
-    '''   
+    
     e = kplus1(i)
-    flag = 4
-    print(a)
+    flag = 4 
     prob,ee = prob_finder(e, flag)
     plus1_prob.append(prob)
-    '''
+    
 
     f = kminus1(i)
     flag = 5
     prob,ff = prob_finder(f, flag)
     minus1_prob.append(prob)
+    
+    tags=tagger(i)
+    g=[tags[0]]
+    #print(g)
+    flag=6
+    prob,gg = prob_finder(g, flag)
+    beforeTag_prob.append(prob)
+    
+    h=[tags[1]]
+    flag=7
+    prob,h = prob_finder(h, flag)
+    afterTag_prob.append(prob)
 
-    collection=[bi_prob[x],uni_prob[x],plus2_prob[x],minus2_prob[x],minus1_prob[x]]
-    reorder=np.argmax([bi_prob[x],uni_prob[x],plus2_prob[x],minus2_prob[x],minus1_prob[x]])
 
-    if(reorder==4):
+    collection=[bi_prob[x],uni_prob[x],plus2_prob[x],minus2_prob[x],minus1_prob[x],beforeTag_prob[x],afterTag_prob[x]]
+    reorder=np.argmax([bi_prob[x],uni_prob[x],plus2_prob[x],minus2_prob[x],minus1_prob[x],beforeTag_prob[x],afterTag_prob[x]])
+
+    if(reorder==6):
+        final.append(ff)
+    elif(reorder==5):
+        final.append(ff)
+    elif(reorder==4):
         final.append(ff)
 
     elif (reorder == 3):
@@ -320,7 +373,6 @@ for i in content:
 
     elif (reorder == 0):
         final.append(aa)
-
 
 
 
