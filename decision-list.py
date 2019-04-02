@@ -8,9 +8,9 @@ import nltk
 import random
 
 #Fetches the xml file and stores it in variable called tree
-#tree = ET.parse(r'D:\bin\AIT-690\Assignments\wsd\PA3\PA3\line-train.xml')
+tree = ET.parse(r'D:\bin\AIT-690\Assignments\wsd\PA3\PA3\line-train.xml')
 
-tree = ET.parse(r'C:\Users\alaga\Desktop\sem 2\AIT690\WSD\line-train.xml')
+#tree = ET.parse(r'C:\Users\alaga\Desktop\sem 2\AIT690\WSD\line-train.xml')
 #Points to the root of the tree
 root = tree.getroot()
 line=root.find('lexelt')
@@ -208,27 +208,6 @@ afterTagDf=dfBuilder(afterTag)
 
 
 
-
-
-content=[]
-cnt=1
-for val in line:
-    for context in val:
-        if(cnt%2==0):
-            temp=str(ET.tostring(context))
-            temp = temp.replace("<s>","")
-            temp = temp.replace("</s>", "")
-            temp = temp.replace(r'\n', "")
-            temp = temp.replace("<context>", "")
-            temp = temp.replace("</context>", "")
-            content.append(temp)
-        cnt+=1
-
-
-
-
-
-
 def prob_finder(temp_list,flag):
     if (temp_list != 'E O L'):
 
@@ -239,6 +218,7 @@ def prob_finder(temp_list,flag):
             if(mer in bigramwords.index):
                 product = bigramwords.at[mer, 'product']
                 phone = bigramwords.at[mer, 'phone']
+                print(0)
             else:
                 product=0
                 phone=0
@@ -248,6 +228,7 @@ def prob_finder(temp_list,flag):
             if (mer in unigramwords.index):
                 product = unigramwords.at[mer, 'product']
                 phone = unigramwords.at[mer, 'phone']
+                print(1)
             else:
                 product = 0
                 phone = 0
@@ -255,50 +236,57 @@ def prob_finder(temp_list,flag):
         elif (flag == 2):
 
             mer = temp_list[0] + " " + temp_list[1]
-            if (mer in kplus2words):
+            if (mer in kplus2words.index):
                 product = kplus2words.at[mer, 'product']
                 phone = kplus2words.at[mer, 'phone']
+                print(2)
             else:
                 product = 0
                 phone = 0
 
         elif (flag == 3):
             mer = temp_list[0] + " " + temp_list[1]
-            if(mer in kminus2words):
+            if(mer in kminus2words.index):
                 product = kminus2words.at[mer, 'product']
                 phone = kminus2words.at[mer, 'phone']
+                print(3)
             else:
                 product = 0
                 phone = 0
 
         elif (flag == 4):
-            if(temp_list[0] in oneWordAfter):
+            if(temp_list[0] in oneWordAfter.index):
                 product = oneWordAfter.at[temp_list[0], 'product']
                 phone = oneWordAfter.at[temp_list[0], 'phone']
+                print(4)
             else:
                 product = 0
                 phone = 0
 
         elif (flag == 5):
-            if(temp_list[0] in oneWordBefore):
+            if(temp_list[0] in oneWordBefore.index):
                 product = oneWordBefore.at[temp_list[0], 'product']
                 phone = oneWordBefore.at[temp_list[0], 'phone']
+                print(5)
             else:
                 product = 0
                 phone = 0
             
         elif (flag == 6):
-            if(temp_list[0] in beforeTagDf):
+            print(temp_list[0])
+            if(temp_list[0] in beforeTagDf.index):
                 product = beforeTagDf.at[temp_list[0], 'product']
                 phone = beforeTagDf.at[temp_list[0], 'phone']
+                #print(6)
             else:
                 product = 0
                 phone = 0
             
         elif (flag == 7):
-            if(temp_list[0] in afterTagDf):
+            if(temp_list[0] in afterTagDf.index):
                 product = afterTagDf.at[temp_list[0], 'product']
                 phone = afterTagDf.at[temp_list[0], 'phone']
+                print(7)
             else:
                 product = 0
                 phone = 0
@@ -306,6 +294,7 @@ def prob_finder(temp_list,flag):
         if (product == phone):
             prob = max(product, phone)
             wsd=random.choice(["product","phone"])
+            
 
         else:
             prob = np.log(product / phone)
@@ -313,14 +302,33 @@ def prob_finder(temp_list,flag):
                 wsd="product";
             else:
                 wsd="phone"
-
-
     else:
         prob = 0
         wsd = random.choice(["product", "phone"])
+        #print(1)
 
 
     return abs(prob),wsd
+
+
+tree = ET.parse(r'D:\bin\AIT-690\Assignments\wsd\PA3\PA3\line-test.xml')
+#tree = ET.parse(r'C:\Users\alaga\Desktop\sem 2\AIT690\WSD\line-test.xml')
+#Points to the root of the tree
+root = tree.getroot()
+line1=root.find('lexelt')
+
+content=[]
+instanceId=[]
+for val in line1:
+    instanceId.append((val.attrib)['id'])
+    for context in val:
+        temp=str(ET.tostring(context))
+        temp = temp.replace("<s>","")
+        temp = temp.replace("</s>", "")
+        temp = temp.replace(r'\n', "")
+        temp = temp.replace("<context>", "")
+        temp = temp.replace("</context>", "")
+        content.append(temp)
 
 
 bi_prob=[]
@@ -372,16 +380,18 @@ for i in content:
     flag=6
     prob,gg = prob_finder(g, flag)
     beforeTag_prob.append(prob)
+    #print(g)
     
     h=[tags[1]]
     flag=7
     prob,hh = prob_finder(h, flag)
     afterTag_prob.append(prob)
+    
 
 
     collection=[bi_prob[x],uni_prob[x],plus2_prob[x],minus2_prob[x],plus1_prob[x],minus1_prob[x],beforeTag_prob[x],afterTag_prob[x]]
     reorder=np.argmax([bi_prob[x],uni_prob[x],plus2_prob[x],minus2_prob[x],plus1_prob[x],minus1_prob[x],beforeTag_prob[x],afterTag_prob[x]])
-
+    print(collection)
     if(reorder==7):
         final.append(hh)
     elif(reorder==6):
@@ -401,28 +411,10 @@ for i in content:
 
 
 
-tree = ET.parse(r'C:\Users\alaga\Desktop\sem 2\AIT690\WSD\line-test.xml')
-#Points to the root of the tree
-root = tree.getroot()
-line1=root.find('lexelt')
-
-content=[]
-instanceId=[]
-for val in line1:
-    instanceId.append((val.attrib)['id'])
-    for context in val:
-        temp=str(ET.tostring(context))
-        temp = temp.replace("<s>","")
-        temp = temp.replace("</s>", "")
-        temp = temp.replace(r'\n', "")
-        temp = temp.replace("<context>", "")
-        temp = temp.replace("</context>", "")
-        content.append(temp)
 
 
-
-
-key=open(r"C:\Users\alaga\Desktop\sem 2\AIT690\WSD1\line-answers.txt")
+#key=open(r"C:\Users\alaga\Desktop\sem 2\AIT690\WSD1\line-answers.txt")
+key=open(r'D:\bin\AIT-690\Assignments\wsd\PA3\PA3\line-answers.txt')
 key=key.read()
 
 
@@ -452,4 +444,3 @@ for i in range(0,len(ans_key)):
 
 
 print(acc/len(ans_key))
-
