@@ -8,15 +8,24 @@ import nltk
 import random
 from nltk.corpus import stopwords 
 from nltk.tokenize import RegexpTokenizer
-
+import sys
 from nltk.corpus import stopwords
 from collections import Counter
+
+
+path=sys.argv[1]
+tree=ET.parse(path)
+
+path2=sys.argv[2]
+tree1=ET.parse(path2)
+
+decision_list=sys.argv[3]
 
 
 random.seed(12345)
 
 #Fetches the xml file and stores it in variable called tree
-tree = ET.parse(r'D:\bin\AIT-690\Assignments\wsd\PA3\PA3\line-train.xml')
+#tree = ET.parse(r'D:\bin\AIT-690\Assignments\wsd\PA3\PA3\line-train.xml')
 
 #tree = ET.parse(r'C:\Users\alaga\Desktop\sem 2\AIT690\WSD\line-train.xml')
 #Points to the root of the tree
@@ -368,9 +377,8 @@ def prob_finder(temp_list,flag):
             wsd=random.choice(["product","phone"])
             
         else:
-            up=product/(product+phone)
-            down=phone/(product+phone)
-            prob = np.log(up/down)
+            prob = np.log(product / phone)
+
             if(product>phone):
                 wsd="product";
             else:
@@ -383,10 +391,10 @@ def prob_finder(temp_list,flag):
     return abs(prob),wsd
 
 
-tree = ET.parse(r'D:\bin\AIT-690\Assignments\wsd\PA3\PA3\line-test.xml')
-#tree = ET.parse(r'C:\Users\alaga\Desktop\sem 2\AIT690\WSD\line-test.xml')
+#tree = ET.parse(r'D:\bin\AIT-690\Assignments\wsd\PA3\PA3\line-test.xml')
+#tree1 = ET.parse(r'C:\Users\alaga\Desktop\sem 2\AIT690\WSD\line-test.xml')
 #Points to the root of the tree
-root = tree.getroot()
+root = tree1.getroot()
 line1=root.find('lexelt')
 
 content=[]
@@ -467,7 +475,7 @@ for i in content:
     productSet=['company']
     phoneSet=['telephone']
     
-    '''
+
     if('consumer' in tokenizedString):
         jj='product'
     
@@ -479,18 +487,18 @@ for i in content:
         
     elif('call' in tokenizedString):
         jj='phone'
+
     elif('calls' in tokenizedString):
         jj='phone'
     
     
     if(len(set(tokenizedString)&set(productSet))>0):
         jj='product'
-        print(set(tokenizedString)&set(productSet))
+        #print(set(tokenizedString)&set(productSet))
     elif(len(set(tokenizedString)&set(phoneSet))>0):
         jj='phone'
-        print(set(tokenizedString)&set(phoneSet))
-    '''
-    
+        #print(set(tokenizedString)&set(phoneSet))
+
     collection=[bi_prob[x],uni_prob[x],plus2_prob[x],minus2_prob[x],plus1_prob[x],minus1_prob[x],beforeTag_prob[x],afterTag_prob[x]]
     collectionList.append(collection)
     reorder=np.argmax([bi_prob[x],uni_prob[x],plus2_prob[x],minus2_prob[x],plus1_prob[x],minus1_prob[x],beforeTag_prob[x],afterTag_prob[x]])
@@ -515,53 +523,22 @@ for i in content:
         final.append(aa)
 
 
+col=['Bigram','Unigram','Plus2_Words','Minus2_Words','Plus1_Word','Minus1_Word','Before_POS_Tag','After_POS_Tag']
+decision_list_df=pd.DataFrame()
+
+for i in range(0,len(collectionList)):
+    for j in range(0,len(col)):
+        decision_list_df.loc[i, col[j]]=collectionList[i][j]
+
+decision_list_df['Sense']=final
 
 
-
-#key=open(r"C:\Users\alaga\Desktop\sem 2\AIT690\WSD1\line-answers.txt")
-key=open(r'D:\bin\AIT-690\Assignments\wsd\PA3\PA3\line-answers.txt')
-key=key.read()
-
+with open('my-decision-list.txt', 'w') as f:
+    f.write(decision_list_df.to_string())
 
 my_list=""
 for i in range(0,len(instanceId)):
     temp='<answer instance="'+instanceId[i]+'" senseid="'+final[i]+'"/>'
     my_list=my_list+temp+'\n'
 
-
-
-key=key.split()
-my_list=my_list.split()
-
-ans_key=[]
-my_ans=[]
-for i in range(0,len(key)):
-    if(key[i].find("senseid")==False):
-        ans_key.append(key[i])
-        my_ans.append(my_list[i])
-
-
-initialList=np.zeros((2,2))
-confusionMatrix=pd.DataFrame(initialList, index=set(senses), columns=set(senses))
-acc=0
-for i in range(0,len(ans_key)):
-    if(ans_key[i]==my_ans[i]):
-        acc+=1
-        actual=(ans_key[i].split("="))[1].replace('"','')[:-2]
-        predicted=(my_ans[i].split("="))[1].replace('"','')[:-2]
-        count=confusionMatrix.at[actual,predicted]
-        count+=1
-        confusionMatrix.at[actual,predicted]=count
-    else:
-        actual=(ans_key[i].split("="))[1].replace('"','')[:-2]
-        predicted=(my_ans[i].split("="))[1].replace('"','')[:-2]
-        count=confusionMatrix.at[actual,predicted]
-        count+=1
-        confusionMatrix.at[actual,predicted]=count
-        
-    
-    
-    
-
-
-print(acc/len(ans_key))
+print(my_list)
