@@ -1,3 +1,77 @@
+'''
+WSD by Team GAP
+Team Members: Pranav Krishna SJ,Alagappan A, Ganesh Nalluru
+Date: 04/04/2019
+
+Introduction
+--------------
+This program does word sense disambiguation for a given context,
+the ambiguous word take into consideration is "line" which has two
+meanings, "Product" and "phone". The task is to identify the sense of
+the word "line" in the given context.
+
+Reference: Yarowsky-Decision-List-1994(https://www.aclweb.org/anthology/P94-1013)
+
+
+Example
+-------
+Consider the below example,
+The New York plan froze basic rates, offered no protection to Nynex against an economic
+downturn that sharply cut demand and didn't offer flexible pricing.In contrast, the California economy is booming,
+with 4.5% access <line> growth in the past year.
+
+Here, the word inside angular bracket is ambiguous. Based on the neighbouring words the sense here is "phone".
+
+Another example,
+Culinova fresh entrees, launched in 1986 by Philip Morris Cos.'s General Foods Corp., hit similar distribution
+problems.Last December, shortly after Philip Morris bought Kraft Inc., the struggling <line> was scrapped.
+
+Here, the word "line" is surrounded with words relation to products. So, the sense here is "product"
+
+
+Usage Instruction
+-----------------
+The Program consists of 2 python codes, "decision-list.py" and "scorer.py"
+
+Windows
+-------
+1.Open cmd prompt, navigate to the location where the python codes are stored along with line-train.xml,line-test.xml
+and line-answers.txt
+
+2.Run the following command "python decision-list.py line-train.xml line-test.xml my-decision-list.txt >my-line-answers.txt",
+this creates 2 text files, "my-decision-list.txt" consists of log-likelihood scores for each collocation type and the
+predicted sense for a particular context. "my-line-answers.txt" is expected to have the instance id along with the
+predicted sense which will be used by "scorer.py"
+
+3.Run the following command "python scorer.py my-line-answers.txt line-answers.txt", this compares the result generated
+by the program "decision-list.py" with the given key "line-answers.txt".
+
+4.Based on the comparison a confusion matrix is generated along with the accuracy of the program.
+
+Linux
+-----
+Follow the same steps as above, instead of command prompt use terminal to run the above commands.
+
+
+Algorithm
+---------
+    1.Get train, test files from the user.
+    2.Extract the "context" from "line-train.xml" document, along with its senseid.
+    3.Identify the ambiguous word(<head>line</head>).
+    4.Identify words surrounding the ambiguous word
+        4.1. Sub divide into 'Bigram','Unigram','Plus2_Words','Minus2_Words','Plus1_Word','Minus1_Word',
+        'Before_POS_Tag','After_POS_Tag'
+        4.2 Based on which update the count value for both the senseids("Product","phone"). For example, count how many
+        times a set of bigram words is associtaed with a senseid.
+        4.3 Store it in different dataframes, namely "Bigram','Unigram','Plus2_Words'.......
+    5.Finally, extract the "context" from "line-test.xml".
+    6.Run a single context against all the created data frames and generate log likelihood for each data frame, find the
+    max log likelihood value along with its associated dataframe.
+    7.The selected dataframe is looked up. Based on the max count of the senseid, the sense is linked with the context.
+    8.If log likelihood is same along all the data frames then a random choice is made between "product" and "phone"
+
+
+'''
 
 #Importing required packages
 import xml.etree.ElementTree as ET
@@ -13,6 +87,7 @@ from nltk.corpus import stopwords
 from collections import Counter
 
 
+#Command Line Inputs
 path=sys.argv[1]
 tree=ET.parse(path)
 
@@ -23,7 +98,6 @@ decision_list=sys.argv[3]
 
 
 random.seed(12345)
-
 #Fetches the xml file and stores it in variable called tree
 #tree = ET.parse(r'D:\bin\AIT-690\Assignments\wsd\PA3\PA3\line-train.xml')
 
@@ -391,12 +465,14 @@ def prob_finder(temp_list,flag):
     return abs(prob),wsd
 
 
-#tree = ET.parse(r'D:\bin\AIT-690\Assignments\wsd\PA3\PA3\line-test.xml')
+#tree1 = ET.parse(r'D:\bin\AIT-690\Assignments\wsd\PA3\PA3\line-test.xml')
 #tree1 = ET.parse(r'C:\Users\alaga\Desktop\sem 2\AIT690\WSD\line-test.xml')
-#Points to the root of the tree
+
+#Points to the root of the tree1
 root = tree1.getroot()
 line1=root.find('lexelt')
 
+# The line-test.xml is extracted of context and is cleaned for further precessing.
 content=[]
 instanceId=[]
 for val in line1:
@@ -409,6 +485,8 @@ for val in line1:
         temp = temp.replace("<context>", "")
         temp = temp.replace("</context>", "")
         content.append(temp)
+
+
 
 jj=None
 count=0
