@@ -6,6 +6,14 @@ import pandas as pd
 import re
 import nltk
 import random
+from nltk.corpus import stopwords 
+from nltk.tokenize import RegexpTokenizer
+
+from nltk.corpus import stopwords
+from collections import Counter
+
+
+random.seed(12345)
 
 #Fetches the xml file and stores it in variable called tree
 tree = ET.parse(r'D:\bin\AIT-690\Assignments\wsd\PA3\PA3\line-train.xml')
@@ -17,6 +25,14 @@ line=root.find('lexelt')
 
 #Returns two words before and after the ambigus word
 def bigram(xmlstr):
+    xmlstr=str(xmlstr).lower()
+    xmlstr = xmlstr.replace(",", "")
+    xmlstr = xmlstr.replace("<s>","")
+    xmlstr = xmlstr.replace("</s>", "")
+    xmlstr = xmlstr.replace(r'\n', "")
+    xmlstr = xmlstr.replace("<context>", "")
+    xmlstr = xmlstr.replace("</context>", "")
+    xmlstr = xmlstr.replace(",", "")
     features=re.findall('(\w+ \w+)"?.?-? <head>\w{4,5}<\/head> (\w+ \w+)', str(xmlstr), re.IGNORECASE)
     if(features==[]):
         return('E O L')
@@ -25,7 +41,15 @@ def bigram(xmlstr):
 
 def kwordsBefore(xmlstr,k):
     features=[]
-    cleanedWords = str(xmlstr).replace('</s>','').replace('<s>','').replace('</context>','').replace('\n','').replace('<context>','').replace('\\n\\n','').replace('\\n','').replace('.',' ')     
+    xmlstr=str(xmlstr).lower()
+    xmlstr = xmlstr.replace(",", "")
+    xmlstr = xmlstr.replace("<s>","")
+    xmlstr = xmlstr.replace("</s>", "")
+    xmlstr = xmlstr.replace(".", " ")
+    xmlstr = xmlstr.replace(r'\n', "")
+    xmlstr = xmlstr.replace("<context>", "")
+    xmlstr = xmlstr.replace("</context>", "")
+    cleanedWords = xmlstr.replace(",", "")
     bag_of_words=cleanedWords.split()
     
     if('<head>line</head>' in cleanedWords):
@@ -36,13 +60,23 @@ def kwordsBefore(xmlstr,k):
         index=bag_of_words.index('<head>Lines</head>')
     elif('<head>Line</head>' in bag_of_words):
         index=bag_of_words.index('<head>Line</head>')
+        
     for i in range(1,k+1):
         features.append(bag_of_words[index-i])
+    
     return(features)
     
 def kwordsAfter(xmlstr,k):
+    xmlstr=str(xmlstr).lower()
     features=[]
-    cleanedWords = str(xmlstr).replace('</s>','').replace('<s>','').replace('</context>','').replace('\n','').replace('<context>','').replace('\\n\\n','').replace('\\n','').replace('.',' ')     
+    xmlstr = xmlstr.replace(",", "")
+    xmlstr = xmlstr.replace("<s>","")
+    xmlstr = xmlstr.replace("</s>", "")
+    xmlstr = xmlstr.replace(r'\n', "")
+    xmlstr = xmlstr.replace("<context>", "")
+    xmlstr = xmlstr.replace("</context>", "")
+    xmlstr = xmlstr.replace(".", " ")
+    cleanedWords = xmlstr.replace(",", "")
     bag_of_words=cleanedWords.split()
     
     if('<head>line</head>' in cleanedWords):
@@ -53,8 +87,7 @@ def kwordsAfter(xmlstr,k):
         index=bag_of_words.index('<head>Lines</head>')
     elif('<head>Line</head>' in bag_of_words):
         index=bag_of_words.index('<head>Line</head>')
-    else:
-        print(cleanedWords)
+
     for i in range(1,k+1):
         if(len(bag_of_words)>index+i):
             features.append(bag_of_words[index+i])
@@ -64,12 +97,13 @@ def kwordsAfter(xmlstr,k):
 
 #Returns a word before and after the ambigus word
 def unigram(xmlstr):
-    xmlstr=str(xmlstr)
+    xmlstr=str(xmlstr).lower()
     xmlstr = xmlstr.replace("<s>","")
     xmlstr = xmlstr.replace("</s>", "")
     xmlstr = xmlstr.replace(r'\n', "")
     xmlstr = xmlstr.replace("<context>", "")
     xmlstr = xmlstr.replace("</context>", "")
+    xmlstr = xmlstr.replace(",", "")
     features=re.findall('(\w+)"?.?-? <head>\w{4,5}<\/head> (\w+)', str(xmlstr), re.IGNORECASE)
     if(features==[]):
         return('E O L')
@@ -78,12 +112,13 @@ def unigram(xmlstr):
     return(features)
 #Returns a word before the ambigus word
 def kminus1(xmlstr):
-    xmlstr=str(xmlstr)
+    xmlstr=str(xmlstr).lower()
     xmlstr = xmlstr.replace("<s>","")
     xmlstr = xmlstr.replace("</s>", "")
     xmlstr = xmlstr.replace(r'\n', "")
     xmlstr = xmlstr.replace("<context>", "")
     xmlstr = xmlstr.replace("</context>", "")
+    xmlstr = xmlstr.replace(",", "")
     features=re.findall('"?(\w+)"?.?-? <head>', str(xmlstr), re.IGNORECASE)
     if(features==[]):
         return('E O L')
@@ -92,12 +127,13 @@ def kminus1(xmlstr):
     return(features)
 #Returns a word after the ambigus word
 def kplus1(xmlstr):
-    xmlstr=str(xmlstr)
+    xmlstr=str(xmlstr).lower()
     xmlstr = xmlstr.replace("<s>","")
     xmlstr = xmlstr.replace("</s>", "")
     xmlstr = xmlstr.replace(r'\n', "")
     xmlstr = xmlstr.replace("<context>", "")
     xmlstr = xmlstr.replace("</context>", "")
+    xmlstr = xmlstr.replace(",", "")
     features=re.findall(r'</head> [,.;"]? ?(\w+)', str(xmlstr), re.IGNORECASE)
     if(features==[]):
         return('E O L')
@@ -109,12 +145,13 @@ def kplus1(xmlstr):
 def tagger(xmlstr):
     #features=re.findall('</head> (\w+)', str(xmlstr), re.IGNORECASE)
     index=None
-    xmlstr=str(xmlstr)
+    xmlstr=str(xmlstr).lower()
     xmlstr = xmlstr.replace("<s>","")
     xmlstr = xmlstr.replace("</s>", "")
     xmlstr = xmlstr.replace(r'\n', "")
     xmlstr = xmlstr.replace("<context>", "")
     xmlstr = xmlstr.replace("</context>", "")
+    xmlstr = xmlstr.replace(",", "")
     querywords=xmlstr
     #querywords = str(xmlstr).replace('</s>','').replace('<s>','').replace('</context>','').replace('\n','').replace('<context>','').replace('\\n\\n','').replace('\\n','')     
     wordsList=querywords.split()
@@ -142,6 +179,8 @@ senses=[]
 kminus2Feature=[]
 kplus2Feature=[]
 instanceId=[]
+productList=''
+senseList=''
 #Iterates through all the instances
 for val in line:
     #Stores the instance ID
@@ -156,6 +195,10 @@ for val in line:
         else:
             #Converts the tags into strings
             xmlstr = ET.tostring(context)
+            if(senseId=='product'):
+                productList+=(str(xmlstr).lower())
+            else:
+                senseList+=(str(xmlstr).lower())
             #Gets the word before the ambigus word
             beforeWord.append(((kminus1(xmlstr))[0],senseId))
             #Gets the word after the ambigus word
@@ -175,6 +218,36 @@ for val in line:
             kplus2Feature.append((' '.join(kwordsAfter(xmlstr,2)),senseId))
             #print(kwordsBefore(xmlstr,3))
 
+productList=str(productList.lower())
+productList = productList.replace("<s>","")
+productList = productList.replace("</s>", "")
+productList = productList.replace(r'\n', "")
+productList = productList.replace("<context>", "")
+productList = productList.replace("</context>", "")
+
+senseList=str(senseList.lower())
+senseList = senseList.replace("<s>","")
+senseList = senseList.replace("</s>", "")
+senseList = senseList.replace(r'\n', "")
+senseList = senseList.replace("<context>", "")
+senseList = senseList.replace("</context>", "")
+
+stopWords=set(stopwords.words('english'))
+
+tokenizer = RegexpTokenizer(r'\w+')
+
+cleanedWordsProductList=tokenizer.tokenize(productList)
+cleanedWordsProductList=[word for word in cleanedWordsProductList if not word in stopWords]
+
+cleanedWordsPhoneList=tokenizer.tokenize(senseList)
+cleanedWordsPhoneList=[word for word in cleanedWordsPhoneList if not word in stopWords]
+
+intersection = Counter(cleanedWordsProductList) & Counter(cleanedWordsPhoneList)
+ProductListCounts=Counter(cleanedWordsProductList)-intersection
+PhoneListCounts=Counter(cleanedWordsPhoneList)-intersection
+PhoneListCounts.most_common(305)
+
+#list(nltk.FreqDist(cleanedWords))
 
 def setz(sequence):
     sequenceList=[]
@@ -218,7 +291,7 @@ def prob_finder(temp_list,flag):
             if(mer in bigramwords.index):
                 product = bigramwords.at[mer, 'product']
                 phone = bigramwords.at[mer, 'phone']
-                print(0)
+
             else:
                 product=0
                 phone=0
@@ -228,7 +301,7 @@ def prob_finder(temp_list,flag):
             if (mer in unigramwords.index):
                 product = unigramwords.at[mer, 'product']
                 phone = unigramwords.at[mer, 'phone']
-                print(1)
+
             else:
                 product = 0
                 phone = 0
@@ -239,7 +312,7 @@ def prob_finder(temp_list,flag):
             if (mer in kplus2words.index):
                 product = kplus2words.at[mer, 'product']
                 phone = kplus2words.at[mer, 'phone']
-                print(2)
+
             else:
                 product = 0
                 phone = 0
@@ -249,7 +322,7 @@ def prob_finder(temp_list,flag):
             if(mer in kminus2words.index):
                 product = kminus2words.at[mer, 'product']
                 phone = kminus2words.at[mer, 'phone']
-                print(3)
+
             else:
                 product = 0
                 phone = 0
@@ -258,7 +331,7 @@ def prob_finder(temp_list,flag):
             if(temp_list[0] in oneWordAfter.index):
                 product = oneWordAfter.at[temp_list[0], 'product']
                 phone = oneWordAfter.at[temp_list[0], 'phone']
-                print(4)
+
             else:
                 product = 0
                 phone = 0
@@ -267,13 +340,12 @@ def prob_finder(temp_list,flag):
             if(temp_list[0] in oneWordBefore.index):
                 product = oneWordBefore.at[temp_list[0], 'product']
                 phone = oneWordBefore.at[temp_list[0], 'phone']
-                print(5)
+
             else:
                 product = 0
                 phone = 0
             
         elif (flag == 6):
-            print(temp_list[0])
             if(temp_list[0] in beforeTagDf.index):
                 product = beforeTagDf.at[temp_list[0], 'product']
                 phone = beforeTagDf.at[temp_list[0], 'phone']
@@ -286,18 +358,19 @@ def prob_finder(temp_list,flag):
             if(temp_list[0] in afterTagDf.index):
                 product = afterTagDf.at[temp_list[0], 'product']
                 phone = afterTagDf.at[temp_list[0], 'phone']
-                print(7)
+                #print(7)
             else:
                 product = 0
-                phone = 0
+                phone =    0
 
         if (product == phone):
             prob = max(product, phone)
             wsd=random.choice(["product","phone"])
             
-
         else:
-            prob = np.log(product / phone)
+            up=product/(product+phone)
+            down=phone/(product+phone)
+            prob = np.log(up/down)
             if(product>phone):
                 wsd="product";
             else:
@@ -305,7 +378,6 @@ def prob_finder(temp_list,flag):
     else:
         prob = 0
         wsd = random.choice(["product", "phone"])
-        #print(1)
 
 
     return abs(prob),wsd
@@ -330,7 +402,8 @@ for val in line1:
         temp = temp.replace("</context>", "")
         content.append(temp)
 
-
+jj=None
+count=0
 bi_prob=[]
 uni_prob=[]
 minus2_prob=[]
@@ -340,8 +413,10 @@ plus1_prob=[]
 beforeTag_prob=[]
 afterTag_prob=[]
 final=[]
+collectionList=[]
 x=-1
 for i in content:
+    jj=None
     x+=1
     a = bigram(i)
     flag=0
@@ -352,6 +427,7 @@ for i in content:
     flag=1
     prob,bb = prob_finder(b,flag)
     uni_prob.append(prob)
+    
 
     c = kwordsAfter(i, 2)
     flag = 2
@@ -387,12 +463,41 @@ for i in content:
     prob,hh = prob_finder(h, flag)
     afterTag_prob.append(prob)
     
-
-
+    tokenizedString=nltk.word_tokenize(i.lower())
+    productSet=['company']
+    phoneSet=['telephone']
+    
+    '''
+    if('consumer' in tokenizedString):
+        jj='product'
+    
+    elif('phone' in tokenizedString):
+        jj='phone'
+       
+    elif('telephone' in tokenizedString):
+        jj='phone'
+        
+    elif('call' in tokenizedString):
+        jj='phone'
+    elif('calls' in tokenizedString):
+        jj='phone'
+    
+    
+    if(len(set(tokenizedString)&set(productSet))>0):
+        jj='product'
+        print(set(tokenizedString)&set(productSet))
+    elif(len(set(tokenizedString)&set(phoneSet))>0):
+        jj='phone'
+        print(set(tokenizedString)&set(phoneSet))
+    '''
+    
     collection=[bi_prob[x],uni_prob[x],plus2_prob[x],minus2_prob[x],plus1_prob[x],minus1_prob[x],beforeTag_prob[x],afterTag_prob[x]]
+    collectionList.append(collection)
     reorder=np.argmax([bi_prob[x],uni_prob[x],plus2_prob[x],minus2_prob[x],plus1_prob[x],minus1_prob[x],beforeTag_prob[x],afterTag_prob[x]])
-    print(collection)
-    if(reorder==7):
+    
+    if(jj):
+        final.append(jj)        
+    elif(reorder==7):
         final.append(hh)
     elif(reorder==6):
         final.append(gg)
@@ -436,11 +541,27 @@ for i in range(0,len(key)):
         my_ans.append(my_list[i])
 
 
-
+initialList=np.zeros((2,2))
+confusionMatrix=pd.DataFrame(initialList, index=set(senses), columns=set(senses))
 acc=0
 for i in range(0,len(ans_key)):
     if(ans_key[i]==my_ans[i]):
         acc+=1
+        actual=(ans_key[i].split("="))[1].replace('"','')[:-2]
+        predicted=(my_ans[i].split("="))[1].replace('"','')[:-2]
+        count=confusionMatrix.at[actual,predicted]
+        count+=1
+        confusionMatrix.at[actual,predicted]=count
+    else:
+        actual=(ans_key[i].split("="))[1].replace('"','')[:-2]
+        predicted=(my_ans[i].split("="))[1].replace('"','')[:-2]
+        count=confusionMatrix.at[actual,predicted]
+        count+=1
+        confusionMatrix.at[actual,predicted]=count
+        
+    
+    
+    
 
 
 print(acc/len(ans_key))
