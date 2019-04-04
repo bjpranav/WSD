@@ -12,7 +12,21 @@ the word "line" in the given context.
 
 Reference: Yarowsky-Decision-List-1994(https://www.aclweb.org/anthology/P94-1013)
 
-
+Features Used:
+    One word before ambiguous word.
+    One word after ambiguous word.
+    Two words before ambiguous word.
+    Two words after ambiguous word.
+    One word before and after ambiguous word.
+    Two words before and after ambiguous word.
+    One part of speech tag before ambiguous word.
+    One part of speech tag after ambiguous word.
+    Along with these features some rules were written. If a particular word is in context
+    then a particular sense is assigned to the word.
+    
+Accuracy:
+    We recieved an accuracy of 93% on the test data.
+    
 Example
 -------
 Consider the below example,
@@ -80,10 +94,10 @@ import pandas as pd
 import re
 import nltk
 import random
-from nltk.corpus import stopwords 
-from nltk.tokenize import RegexpTokenizer
+#from nltk.corpus import stopwords 
+#from nltk.tokenize import RegexpTokenizer
 import sys
-from nltk.corpus import stopwords
+#from nltk.corpus import stopwords
 from collections import Counter
 
 
@@ -118,7 +132,7 @@ def bigram(xmlstr):
         return('E O L')
     else:
         return(features)
-
+#Returns k words before ambigus word
 def kwordsBefore(xmlstr,k):
     features=[]
     xmlstr=str(xmlstr).lower()
@@ -146,6 +160,7 @@ def kwordsBefore(xmlstr,k):
     
     return(features)
     
+#Returns k words after ambigus word
 def kwordsAfter(xmlstr,k):
     xmlstr=str(xmlstr).lower()
     features=[]
@@ -261,7 +276,8 @@ kplus2Feature=[]
 instanceId=[]
 productList=''
 senseList=''
-#Iterates through all the instances
+#Iterates through all the instances, finds and extracts features and then appends
+#them to appropriate lists
 for val in line:
     #Stores the instance ID
     instanceId.append((val.attrib)['id'])
@@ -289,15 +305,19 @@ for val in line:
             #Gets two words before and after the ambigus word
             bigramString=' '.join((bigram(xmlstr))[0])
             bigramFeature.append((bigramString,senseId))
-            # Gets the tag before and after the ambiguous tag
+            # Gets the tag before and after the ambiguous word
             tags=tagger(xmlstr)
             beforeTag.append((tags[0],senseId))
             afterTag.append((tags[1],senseId))
-            #print(beforeTag,afterTag)
+            
+            # Gets 2 words before and after the ambiguous word
             kminus2Feature.append((' '.join(kwordsBefore(xmlstr,2)),senseId))
             kplus2Feature.append((' '.join(kwordsAfter(xmlstr,2)),senseId))
-            #print(kwordsBefore(xmlstr,3))
 
+#The following code finds the words and its frequency for words which are exclusively in sentences having a particular
+#sense. Those words can be used to write rules. The code is commented out because those words did not help in improving 
+#accuracy
+'''
 productList=str(productList.lower())
 productList = productList.replace("<s>","")
 productList = productList.replace("</s>", "")
@@ -328,7 +348,8 @@ PhoneListCounts=Counter(cleanedWordsPhoneList)-intersection
 PhoneListCounts.most_common(305)
 
 #list(nltk.FreqDist(cleanedWords))
-
+'''
+#Finds unique elements in the list in order
 def setz(sequence):
     sequenceList=[]
     for i in sequence:
@@ -337,10 +358,11 @@ def setz(sequence):
     return(sequenceList)
 
 
-
+#Initializes a dataframe with ones. 1 is used instead of 0 to perform smoothing.
 def initialize(sequence1,sequence2):
     return(np.ones((len(sequence1), len(sequence2))))
-    
+ 
+#The following function builds a dataframe with features and its sense count.
 def dfBuilder(featureSequence):
     uniqueList=setz(featureSequence)
     initializeSet = initialize((uniqueList), set(senses))
@@ -349,7 +371,7 @@ def dfBuilder(featureSequence):
         initializedFeature.at[i[0], i[1]]=initializedFeature.at[i[0], i[1]] + 1
     return(initializedFeature)
 
-
+#Building a dataframe for each feature
 oneWordBefore=dfBuilder(beforeWord)
 oneWordAfter=dfBuilder(afterWord)
 unigramwords=dfBuilder(unigramFeature)
