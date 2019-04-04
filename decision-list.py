@@ -363,18 +363,20 @@ beforeTagDf=dfBuilder(beforeTag)
 afterTagDf=dfBuilder(afterTag)
 
 
-
+# neighbouring words and flag is passed as an argument to prob_finder
 def prob_finder(temp_list,flag):
+    # if the word is "not end of line " enters condition
     if (temp_list != 'E O L'):
-
-
+        # based on the passed flag value enters the conditions
         if(flag==0):
-
+            # merges the words
             mer = temp_list[0][0] + " " + temp_list[0][1]
+            # checks if the word exist in the collocation dataframe
             if(mer in bigramwords.index):
+                # gets the associated sense count value
                 product = bigramwords.at[mer, 'product']
                 phone = bigramwords.at[mer, 'phone']
-
+            # other wise counts of sense is set to 0
             else:
                 product=0
                 phone=0
@@ -432,7 +434,7 @@ def prob_finder(temp_list,flag):
             if(temp_list[0] in beforeTagDf.index):
                 product = beforeTagDf.at[temp_list[0], 'product']
                 phone = beforeTagDf.at[temp_list[0], 'phone']
-                #print(6)
+
             else:
                 product = 0
                 phone = 0
@@ -441,22 +443,27 @@ def prob_finder(temp_list,flag):
             if(temp_list[0] in afterTagDf.index):
                 product = afterTagDf.at[temp_list[0], 'product']
                 phone = afterTagDf.at[temp_list[0], 'phone']
-                #print(7)
+
             else:
                 product = 0
                 phone =    0
 
+        # Checks if both product and phone have the same count value
+        # if yes then a random sense is returned
         if (product == phone):
             prob = max(product, phone)
             wsd=random.choice(["product","phone"])
-            
+        # Otherwise the log likelhood is calculated
         else:
             prob = np.log(product / phone)
 
+            # Based on the count value the sense is returned
             if(product>phone):
                 wsd="product";
             else:
                 wsd="phone"
+    # if the word is "end of line" then probability is set to 0
+    # A random choice is returned
     else:
         prob = 0
         wsd = random.choice(["product", "phone"])
@@ -488,7 +495,6 @@ for val in line1:
 
 
 
-jj=None
 count=0
 bi_prob=[]
 uni_prob=[]
@@ -501,9 +507,16 @@ afterTag_prob=[]
 final=[]
 collectionList=[]
 x=-1
+# Each context runs through a loop
+# The neighbouring word is extracted based on the collocation(bigram, unigram...) and stored in a variable
+# Setting the flag value
+# passing the stored variable along with flag value to prob finder
+# return probability and respective sense
+# appending the returned probability in a list
 for i in content:
     jj=None
     x+=1
+
     a = bigram(i)
     flag=0
     prob,aa=prob_finder(a,flag)
@@ -513,7 +526,6 @@ for i in content:
     flag=1
     prob,bb = prob_finder(b,flag)
     uni_prob.append(prob)
-    
 
     c = kwordsAfter(i, 2)
     flag = 2
@@ -525,12 +537,10 @@ for i in content:
     prob,dd = prob_finder(d, flag)
     minus2_prob.append(prob)
 
-    
     e = kplus1(i)
     flag = 4 
     prob,ee = prob_finder(e, flag)
     plus1_prob.append(prob)
-    
 
     f = kminus1(i)
     flag = 5
@@ -542,7 +552,6 @@ for i in content:
     flag=6
     prob,gg = prob_finder(g, flag)
     beforeTag_prob.append(prob)
-    #print(g)
     
     h=[tags[1]]
     flag=7
@@ -553,7 +562,7 @@ for i in content:
     productSet=['company']
     phoneSet=['telephone']
     
-
+    # few rules to improve the accuracy, the obvious neighbouring words are associated with their senses
     if('consumer' in tokenizedString):
         jj='product'
     
@@ -577,10 +586,14 @@ for i in content:
         jj='phone'
         #print(set(tokenizedString)&set(phoneSet))
 
+    # storing all the probabilities in list
     collection=[bi_prob[x],uni_prob[x],plus2_prob[x],minus2_prob[x],plus1_prob[x],minus1_prob[x],beforeTag_prob[x],afterTag_prob[x]]
+    # appending all the probabilities in list
     collectionList.append(collection)
+    # finding the max probability out of all the collocation
     reorder=np.argmax([bi_prob[x],uni_prob[x],plus2_prob[x],minus2_prob[x],plus1_prob[x],minus1_prob[x],beforeTag_prob[x],afterTag_prob[x]])
-    
+
+    # the selected probability assigns the sense and appends the final list
     if(jj):
         final.append(jj)        
     elif(reorder==7):
@@ -600,7 +613,7 @@ for i in content:
     elif (reorder == 0):
         final.append(aa)
 
-
+# Creating a data frame to store all the log likelihood and associated senses
 col=['Bigram','Unigram','Plus2_Words','Minus2_Words','Plus1_Word','Minus1_Word','Before_POS_Tag','After_POS_Tag']
 decision_list_df=pd.DataFrame()
 
@@ -610,10 +623,11 @@ for i in range(0,len(collectionList)):
 
 decision_list_df['Sense']=final
 
-
+# Storing it in a text file
 with open('my-decision-list.txt', 'w') as f:
     f.write(decision_list_df.to_string())
 
+# Creating a text file with instance id and associated senses in "line-answers.txt" format
 my_list=""
 for i in range(0,len(instanceId)):
     temp='<answer instance="'+instanceId[i]+'" senseid="'+final[i]+'"/>'
