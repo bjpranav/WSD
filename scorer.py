@@ -1,6 +1,4 @@
 
-#key=open(r"C:\Users\alaga\Desktop\sem 2\AIT690\WSD1\line-answers.txt")
-
 # Importing the required packages
 import numpy as np
 import pandas as pd
